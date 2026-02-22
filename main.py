@@ -1,4 +1,6 @@
-import os
+
+
+    import os
 import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, filters, ContextTypes
@@ -7,10 +9,9 @@ HF_API_KEY = os.getenv("HF_API_KEY")
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 HF_MODEL = "bigscience/bloomz-560m"
 
-# Memoria de conversación por chat (mantiene últimas 10 interacciones)
+# Memoria de conversación por chat (últimos 10 intercambios)
 chat_history = {}
-
-MAX_HISTORY = 10  # mantiene solo últimos 10 mensajes por chat
+MAX_HISTORY = 10
 
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
@@ -21,7 +22,6 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     chat_history[chat_id].append(f"User: {user_message}")
 
-    # Limitar la memoria
     if len(chat_history[chat_id]) > MAX_HISTORY * 2:
         chat_history[chat_id] = chat_history[chat_id][-MAX_HISTORY*2:]
 
