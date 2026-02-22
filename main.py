@@ -5,6 +5,7 @@ import requests
 from telegram import Update
 from telegram.ext import ApplicationBuilder, MessageHandler, CommandHandler, filters, ContextTypes
 
+# Variables de entorno
 HF_API_KEY = os.getenv("HF_API_KEY")
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 HF_MODEL = "bigscience/bloomz-560m"
@@ -13,7 +14,7 @@ HF_MODEL = "bigscience/bloomz-560m"
 chat_history = {}
 MAX_HISTORY = 10
 
-# Personalidad inicial
+# Personalidad del bot
 BOT_PERSONALITY = "Eres un asistente muy amigable, claro y motivador, siempre respondiendo de forma humana y cordial."
 
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -29,7 +30,7 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(chat_history[chat_id]) > MAX_HISTORY * 2:
         chat_history[chat_id] = chat_history[chat_id][-MAX_HISTORY*2:]
 
-    # Prompt con personalidad
+    # Preparar prompt con personalidad y memoria
     prompt = BOT_PERSONALITY + "\n" + "\n".join(chat_history[chat_id]) + "\nAI:"
 
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
@@ -49,12 +50,11 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = "No entendí 😅"
 
     chat_history[chat_id].append(f"AI: {text}")
-
     await update.message.reply_text(text)
 
 # Comandos especiales
 async def rutina(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("💪 Aquí va tu rutina diaria: 3x15 flexiones, 3x10 sentadillas, 20 min cardio")
+    await update.message.reply_text("💪 Rutina diaria: 3x15 flexiones, 3x10 sentadillas, 20 min cardio")
 
 async def recordatorio(update: Update, context: ContextTypes.DEFAULT_TYPE):
     args = context.args
@@ -64,11 +64,12 @@ async def recordatorio(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Recordatorio guardado: {' '.join(args)}")
 
 async def mpf(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("📚 Pregunta MPF: ¿Cuál es el artículo 222? Respuesta: ... (info de ejemplo)")
+    await update.message.reply_text("📚 Pregunta MPF: ¿Cuál es el artículo 222? Respuesta: ... (ejemplo)")
 
+# Construir la app
 app = ApplicationBuilder().token(TOKEN).build()
 
-# Handler de comandos
+# Handlers de comandos
 app.add_handler(CommandHandler("rutina", rutina))
 app.add_handler(CommandHandler("recordatorio", recordatorio))
 app.add_handler(CommandHandler("MPF", mpf))
