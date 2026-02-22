@@ -18,7 +18,7 @@ BOT_PERSONALITY = (
     "respondiendo de forma humana y cordial."
 )
 
-# Función principal de respuesta
+# Función principal de respuesta con manejo de errores
 async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat_id = update.effective_chat.id
     user_message = update.message.text
@@ -32,24 +32,27 @@ async def reply(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(chat_history[chat_id]) > MAX_HISTORY * 2:
         chat_history[chat_id] = chat_history[chat_id][-MAX_HISTORY*2:]
 
-    # Crear prompt con personalidad
     prompt = BOT_PERSONALITY + "\n" + "\n".join(chat_history[chat_id]) + "\nAI:"
 
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
     payload = {"inputs": prompt}
 
-    response = requests.post(
-        f"https://api-inference.huggingface.co/models/{HF_MODEL}",
-        headers=headers,
-        json=payload
-    )
+    try:
+        response = requests.post(
+            f"https://api-inference.huggingface.co/models/{HF_MODEL}",
+            headers=headers,
+            json=payload,
+            timeout=20
+        )
+        data = response.json()
 
-    data = response.json()
-
-    if "generated_text" in data[0]:
-        text = data[0]["generated_text"].split("AI:")[-1].strip()
-    else:
-        text = "No entendí 😅"
+        # Validar que la respuesta sea un array con generated_text
+        if isinstance(data, list) and "generated_text" in data[0]:
+            text = data[0]["generated_text"].split("AI:")[-1].strip()
+        else:
+            text = "🤖 El modelo aún no está listo o hubo un error. Intenta de nuevo."
+    except Exception as e:
+        text = f"⚠️ Error de IA: {str(e)}"
 
     chat_history[chat_id].append(f"AI: {text}")
     await update.message.reply_text(text)
